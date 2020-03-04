@@ -1,0 +1,136 @@
+	new String[]
+
+************************************************
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+************************************************
+
+int _id = getResources().getIdentifier("b_"+navn.toLowerCase(),"drawable", getPackageName());
+flagImageView.setImageResource(_id);
+
+String myResourceString = getResources().getString(R.string.hello);
+double scale = getResources().getDisplayMetrics().density;
+names = getResources().getStringArray(R.array.names_array);
+getResources().getColor(R.color.green)
+getResources().getDrawable(R.drawable.right)
+
+************************************************
+
+Back knapp:
+1- i Activity fil
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        
+2- i manifest filen
+        <activity
+            android:name=".NameActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+
+
+
+        final ActionBar ab = getSupportActionBar();
+        ab.show();
+        ab.hide();
+
+
+************************************************
+
+You can declare items for the options menu from either your Activity subclass or a Fragment subclass. If both your activity and fragment(s) declare items for the options menu, they are combined in the UI. 
+The activity's items appear first, followed by those of each fragment in the order in which each fragment is added to the activity. If necessary, you can re-order the menu items with the android:orderInCategory attribute in 
+each <item> you need to move
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+	getMenuInflater().inflate(R.menu.main, menu);
+	return true;
+}
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem logToggle = menu.findItem(R.id.menu_toggle_log);
+        logToggle.setVisible(findViewById(R.id.sample_output) instanceof ViewAnimator);
+        logToggle.setTitle(mLogShown ? R.string.sample_hide_log : R.string.sample_show_log);
+
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.menu_add:
+                Toast.makeText(this, "Add Clicked", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.menu_close:
+                finish();
+                return true;
+            case R.id.action_green:
+	            Intent intent = new Intent(this, GreenBrandActivity.class);
+	            startActivity(intent);
+	            return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+-------------------- OR -----------------------
+
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_simple_layout, menu);
+
+    setIntentOnMenuItem(menu, R.id.action_green,
+            new Intent(this, GreenBrandActivityqweqe.class));
+
+        return true;
+}
+
+private void setIntentOnMenuItem(Menu menu, int menuId, Intent intent) {
+    MenuItem menuItem = menu.findItem(menuId);
+    if (menuItem != null) 
+        menuItem.setIntent(intent);
+    else 
+        Log.w(DEBUG_TAG, "Warning: Can't find menu item: " + menuId);
+}
+
+public boolean onPrepareOptionsMenu(Menu menu) {
+	// Det samme som ovenfor
+}
+
+
+
+It is not necessary to over ride onOptionsItemSelected(MenuItem item), in order to launch an intent attached to an item, 
+
+
+
+
+
+
+************************************************
+
+
+
+

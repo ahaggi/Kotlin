@@ -1,0 +1,287 @@
+Extensions
+
+https://kotlinlang.org/docs/reference/extensions.html
+
+Kotlin, provides the ability to extend a class with new functionality without having to inherit from the class or use any type of design pattern such as Decorator. This is done via special declarations called extensions. Kotlin supports extension functions and extension properties.
+
+
+Extension functions:
+
+	fun String.removeFirstLastChar(): String =  this.substring(1, this.length - 1)
+
+The "this" keyword inside an extension function corresponds to the receiver object (the one that is passed before the dot). 
+
+	fun main(args: Array<String>) {
+	    val myString= "Hello Everyone"
+	    val result = myString.removeFirstLastChar()
+	    println("First character is: $result")
+	}
+
+Extension Properties:
+https://kotlinlang.org/docs/reference/extensions.html#extension-properties
+
+
+Declaring Extensions as Members
+https://kotlinlang.org/docs/reference/extensions.html#declaring-extensions-as-members
+
+****************************************************************************************
+
+Functions
+
+Kotlin functions are first-class, which means that they can be stored in variables and data structures, passed as arguments to and returned from other higher-order functions 
+
+Same as Dart
+	- Default Arguments
+	- Positional args vs Named args 
+						NB Named args uses "=" instead of ":" i.e. somfunc("ewr" , 1 , b = true) 
+	- Unit-returning functions
+
+
+
+receiver def.: instance of the class which has the function definition
+
+-------------------
+
+Function type 
+
+OBS OBS OBS
+TO difine a function type:
+	- fun keyword: fun noe(x:T):T{..}
+	- val keyword: val noe (T)->T = {..}
+
+
+	fun <T> getSomething(item: T): T { ... }
+	fun <A,B> getSomething(item: A): B { ... }
+	fun getSomething(item: Int): String { ... }
+
+	((Int, Int) -> Int)? // nullable function
+
+	(Int) -> ((Int) -> Unit) // function which return another function "curry-func"
+	(Int) -> (Int) -> Unit // the same as above
+	((Int) -> (Int)) -> Unit // Diffrent from the above, this is a function which accept another function as param and retrun "unit"
+
+Function types can optionally have an additional receiver type  A.(B) -> C
+
+That the receiver can stand in for the first parameter. For instance, a value of type (A, B) -> C can be passed or assigned where a A.(B) -> C is expected 
+    val stringPlus1: (String, String) -> String = String::plus
+    println(stringPlus1("abc " , " def"))
+    
+    val stringPlus2: String.(String) -> String = String::plus   //eller     
+	val stringPlus2: String.(String) -> String = {otherStr -> this.plus(otherStr)} OBS OBS "this"
+
+    println("abc ".stringPlus2(" def"))// extension-like call
+
+
+ typealias myFuncType = (Int)->Boolean
+ val someFunc : myFuncType = someOtherFunction
+
+****************************************************************************************
+
+
+Single-Expression functions
+
+// Use either '= ...' or '{ ... }', but not both.
+Functions with block body must always specify return types explicitly, unless it's intended for them to return Unit, in which case it is optional. 
+	fun theAnswer(): Int {
+	    return 42
+	}
+
+Single-Expression functions
+	fun theAnswer():Int = 42 // return type is optional 
+	fun theAnswer() = 42 // = instead of => in dart
+
+****************************************************************************************
+
+Function's params can be with Inferred type
+
+    fun compose(f: (Int) -> Boolean, g: (String) -> Int): (String) -> Boolean {
+        return { x -> f(g(x)) }
+    }
+
+    fun compose(f: (Int) -> Boolean, g: (String) -> Int): (String) -> Boolean = { x -> f(g(x)) }
+
+    Or the params can be with Inferred type "the compiler will figure it out at runtime / expected type A, B, and C is known from the context"
+
+    fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C = { x -> f(g(x)) }    // x is String
+    fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C = { f(g(it)) }        // it is String
+
+
+			val _f:(Int)->Boolean = {n-> n > 5}
+			val _g:(String)->Int = {s-> s.length}
+			val res = compose(_f,_g)("abc")
+			print(res)
+
+****************************************************************************************
+
+Lambda expression syntax
+
+	val f = { x: Int, y: Int -> x * y }
+	Or
+	val f: (Int, Int) -> Int = { x, y -> x * y }
+
+
+	val items = listOf(1,2,3)
+	val product = items.fold(1 , f)        //eqv. to items.fold(1) { x, y -> x * y }
+    println(product)
+
+---------------------------------
+
+it: implicit name of a single parameter
+	It's very common that a lambda expression has only one parameter.
+	ints.filter { it > 0 }
+
+
+---------------------------------
+
+Returning a value from a lambda expression : the value of the last expression is implicitly returned
+
+		val product = items.fold(1 ) { x, y-> x * y }
+		// eqv. to
+		val product = items.fold(1, fold@ { x, y ->
+									val z = x * y
+									return@fold z }) OBS return@fold
+
+---------------------------------
+
+Destructuring in Lambdas 
+
+	map.mapValues { entry -> "${entry.value}!" }
+	map.mapValues { (key, value) -> "$value!" }
+
+
+	data class Pojo(val a: String, val b: String)
+    val map = hashMapOf<String, Pojo>()
+    map.put("id1", Pojo("a1" , "b1"))
+    map.put("id2", Pojo("a2" , "b2"))
+
+    map.mapValues() { (k , v) -> println("key = $k, value = $v") }
+    map.mapValues() { (k , v ) ->
+                     val (a,b) = v                               OBS objuct detructuring
+                     println("key = $k, value = $b") }
+
+
+chaining lambda functions
+
+	listOf( "12a","1234a","12345a","123a").filter { it.length > 3 }.sortedBy { it }.map { it.toUpperCase() }.map(::println)
+
+****************************************************************************************
+
+
+:: operator vs lambda
+
+To pass a function as a param we can used ::operator or Lambda
+--------------
+
+   fun foo(str:String , bar: (String) -> Unit) {
+	    bar(str)
+	}
+
+	We can call foo as flwg:
+
+		foo(String, namedFunction)
+			fun buz(m: String) { println("the message is: $m") }
+			foo("noe" , ::buz)
+
+		OR
+
+		foo(String, lambda)
+			foo("noe" , {str:String -> println("the message is: $str") })
+
+--------------
+
+	val numbers = listOf(1, 2, 3)
+
+	println(numbers.filter(::isOdd))
+
+	OR
+
+	println(numbers.filter({it-> isOdd(it)}))
+
+	OR
+
+	val predicate = ::isOdd
+	println(list.filter(predicate))
+
+--------------
+
+	:: with overloaded functions
+
+
+	:: can be used with overloaded functions when the expected type is known from the context. For example:
+
+	fun isOdd(x: Int) = x % 2 != 0
+	fun isOdd(s: String) = s == "aa" || s == "bb" || s == "ff"
+
+	val list = listOf(1, 2, 3)
+	println(list.filter(::isOdd))        // refers to isOdd(x: Int)
+
+	But
+
+	val list2 = listOf("aa","bb","cc","dd","ee","ff")
+	println(list2.filter(::isOdd))            // refers to isOdd(s: String)
+
+
+	Alt.
+
+	list2.filter(lambda)
+
+	OR
+
+	val predicate: (String) -> Boolean = ::isOdd // refers to isOdd(s: String) becuase of "predicate"-s function type   
+	list2.filter(predicate)
+
+
+****************************************************************************************
+
+Function Composition
+
+If we need to use a member of a class, or an extension function, it needs to be qualified, e.g. String::toCharArray. les mer!!
+
+
+	fun isOdd(x: Int) = x % 2 != 0
+	fun length(s: String) = s.length
+
+	fun compose(f: (Int) -> Boolean, g: (String) -> Int): (String) -> Boolean = { x -> f(g(x)) }
+
+	val oddLength = compose(::isOdd, ::length)
+	val strings = listOf("a", "ab", "abc")
+
+	println(strings.filter(oddLength))  // prints [a, abc]
+
+
+****************************************************************************************
+
+Returning Two Values from a Function
+
+	Let's say we need to return two things from a function. For example, a result object and a status of some sort. A compact way of doing this in Kotlin is to declare a data class and return its instance:
+
+	data class Result(val result: Int, val status: String)
+
+
+	fun someFunc(...):Result{
+		//computation
+		val x:Int = ..
+		val y:String = ..
+
+		return Result(x,y)
+	}
+
+	// Now, to use this function:
+	val (res, st) = someFunc(...)
+
+
+
+****************************************************************************************
+
+spread operator
+
+    class Foo(vararg val strings: String) { 
+		init{
+	        strings.forEach(::println)
+	    }
+    }
+
+
+
+Foo("a", "b", "c")
+Foo(  *arrayOf("d", "e", "f")  ) // *

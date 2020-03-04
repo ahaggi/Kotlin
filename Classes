@@ -1,0 +1,353 @@
+Classes
+
+Order of excution:
+	-primary constructor
+	-by order: initialization of the properties OR  init blocks FCFS
+	-secondaries constructors 
+
+- primary constructor 
+  The primary constructor cannot contain any code. Initialization code can be placed in initializer blocks, which are prefixed with the init keyword.
+
+  If the primary constructor has annotations or visibility modifiers, the constructor keyword is required
+  class Customer public constructor(name: String) { ... } 
+
+	class Person (val name:String){..}
+	class Person (val name:String = "defaultValue" ){..}
+
+	class Person (_str:String){  
+		val name = _str
+	}
+
+	class Person (_str:String){  
+		val name = _str
+	}
+
+- init Blocks
+  the initializer blocks are executed in the same order as they appear in the class body.
+	Note that code in initializer blocks effectively becomes part of the primary constructor. Delegation to the primary constructor happens as the first statement of a secondary constructor, so the code in all initializer blocks is executed before the secondary constructor body. Even if the class has no primary constructor, the delegation still happens implicitly, and the initializer blocks are still executed
+
+	class InitOrderDemo(name: String) {
+	    val firstProperty = "1.st print: First property: $name".also(::println)  // becuase ".also()"
+	    
+	    init {
+	        println("2.nd print: First initializer block that prints ${name}")
+	    }
+	    
+	    val secondProperty = "3.rd print: Second property: ${name.length}".also(::println)
+	    
+	    init {
+	        println("4.th print:Second initializer block that prints ${name.length}")
+	    }
+	}
+
+-Secondary Constructors
+  each secondary constructor needs to delegate to the primary constructor, either directly or indirectly through another secondary constructor(s). 
+
+class A (var x:Int ){								  // primary constructor
+	lateinit var y:Integer                            // late init non-null property 
+    var z:Int = 0									  
+    constructor (_x:Int,_y:Int) : this(_x){			  // secondery constructor calling primary
+        y= Integer(_y)
+    }
+    
+    constructor (_x:Int , _y: Int , _z: Int) : this(_x , _y ){ // secondery constructor, doesn't call primary constructor, but calling another secondery constructor which calls the primary
+        z = _z
+    }
+
+}
+
+
+****************************************************************************************
+
+To avoid the exception:  "Property must be initialized or be abstract"
+https://stackoverflow.com/questions/44205389/difference-between-delegates-notnull-and-lateinit-kotlin
+
+	- Delegates.notNull:
+		var y:String by Delegates.notNull<String>()
+
+	- lateinit used for properties which is: non-null , without costume getter/setter,  not premitive type and  mutable
+		lateinit var lastName : String 
+
+	- Use nullable properties!
+
+****************************************************************************************
+
+open /override modifiers
+
+The override modifier is required for Derived.v(). If it were missing, the compiler would complain. If there is no open modifier on a function, like Base.nv(), declaring a method with the same signature in a subclass is illegal, either with override or without it. The open modifier has no effect when added on members of a final class (i.e.. a class with no open modifier).
+
+open class Base {
+	open val x: Int=...   can override
+    open fun v() { ... }    can override
+    fun nv() { ... }        can NOT override
+}
+
+class Derived() : Base() {
+	override val x: Int = ...
+    override fun v() { ... }
+}
+
+
+****************************************************************************************
+
+Backing Field in Kotlin 
+
+field Keyword:
+    var firstName : String  // backing field generated 
+        get() = firstName
+		set(value) {firstName = value}
+
+So when set(value) {firstName = value} is called, then a recursive call happens and compiler throws a StackOverflow exception because we are calling setter inside the setter.
+The same for get.
+
+    var firstName : String  // backing field generated 
+        get() = field
+		set(value) {field = value}
+
+
+Backing Properties
+
+class Foo {
+    private var _text: String? = null
+    var text: String
+    set(value) {
+        println(value)
+        _text = value
+    }        
+    get() {
+        return _text + ""
+    }
+    fun printText() {
+        println(_text)
+    }
+}
+
+
+var f:Button = Foo()
+f.text = "123456"
+b.printText()
+
+
+****************************************************************************************
+
+Checking for null 
+
+var b: String? = "abc" // b is nullable
+
+Execute if not null
+	b?.let{ ... }
+
+If not null and else
+	val l = if (b != null) b.length else -1
+	val l = b?.length ?: -1
+
+
+Iterate a list with nullable values
+
+	val listWithNulls: List<String?> = listOf("Kotlin", null , "!")
+	for (item in listWithNulls) {
+	    item?.let { print(it) } // prints "Kotlin" and ignores null
+	}
+
+	prints: kotlin!
+
+
+    var str1:String? = "str1"
+    var str2 = str1            // str2 is nullable
+    str2=null
+
+    var str1:String? = "str1"
+    var str2 = str1 + str1     // str2 is NOT nullable,, "wer"+null OR null+"qwe" is NOT valid expression
+    str2=null       // exception Null can not be a value of a non-null type String
+
+****************************************************************************************
+
+object keyword:
+
+- object expression
+  The object keyword can also be used to create anonymous objects. They are used if you need to create an object of a slight modification of some class or interface without declaring a subclass for it. 
+
+			open class Base {
+				open val size: Int=...   can override
+			    open fun v() { ... }    can override
+			    fun nv() { ... }        can NOT override
+			}
+
+
+		  	and to create an "anonymous object" of "Base"
+
+			var _d = object : Base ("234"){ override val size: Int =5}  // this is equivalent to creating an object from a subclass which extends "Base"
+		    print("${_d.size}")
+
+		-----------------------------
+
+			Extra object experssion:
+
+				public interface OnClickListener{
+				  void onClick(View v);
+				}
+
+
+				//java
+				button.setOnClickListener(new OnClickListener(){
+				  @Override
+				  public void onClick(View v){
+				    doSomething();
+				  }
+				});
+
+				eller
+
+				button.setOnClickListener(object : OnClickListener{
+				  override fun onClick(view: View){
+				    doSomething()
+				  }
+				})
+
+
+				we can substitute a function that receives an interface with a lambda, When you define a lambda function, it’s mandatory to use the brackets
+				button.setOnClickListener(  { view -> doSomething() }   )
+
+				We can omit the param and arrow "view ->", if params are not used in "doSomething()". But if we need to used, we can use "it" 
+				button.setOnClickListener(  { doSomething() }  )
+
+
+				If the lambda is the only param for setOnClickListner, we can move the lambda out of the parentheses
+				button.setOnClickListener()  { doSomething() }
+
+				button.setOnClickListener { doSomething() }
+
+------------------------------------------------------------------------------------
+
+- static classes/methods
+
+			* Companion Objects
+				  For a non-static class with some static and non-static members
+
+					class MyClass {
+					    companion object qwe {  //The name of the companion object "qwe" can be omitted
+					        fun create(): MyClass = MyClass()
+					    }
+					    ...
+					}
+
+				  Members of the companion object can be called by 
+					val instance = MyClass.create()
+
+
+
+			* Object declarations
+				  For static classes
+				  Singleton may be useful in several cases, and Kotlin (after Scala) makes it easy to declare singletons:
+
+					object DataProviderManager {
+					    fun registerDataProvider(provider: DataProvider) {
+					        // ...
+					    }
+
+					    val allDataProviders: Collection<DataProvider>
+					        get() = // ...
+					}
+
+				  To refer to the static class, we use its name directly:
+				  	DataProviderManager.registerDataProvider(...)
+
+
+			Extra object declarations
+				Contrary to a class, an object can’t have any constructor, but init blocks are allowed if some initialization code is needed
+				IMPORTANT: see the example in SingletonPattern.kt
+				
+
+****************************************************************************************
+
+
+data class constructor takes only the properties defined with var/val, and not other values as in (  .. class noe( param1:String ){ ..})
+
+data class Person(val name: String) {
+    var age: Int = 0
+}
+
+val person1 = Person("John")
+val person2 = Person("John")
+person1.age = 10
+person2.age = 20
+
+
+
+Only the properties defined inside the primary constructor, will be used inside the toString(), equals(), hashCode(), and copy() implementations
+
+person1 == person2: true
+person1 with age 10: Person(name=John)
+person2 with age 20: Person(name=John)
+
+
+
+****************************************************************************************
+
+
+for (i in 6 downTo 0 step 2) println(i) //prints 6,4,2,0
+for (i in 0..6 step 2) println(i) //prints 0,2,4,6
+for (i in array.indices) println(array[i])
+
+
+Returns and Jumps
+
+
+    * return. By default returns from the nearest enclosing function or anonymous function.
+    * break. Terminates the nearest enclosing loop.            AND ONLY LOOPS NOT LAMBDA i.e Array<T>.foreach { }
+    * continue. Proceeds to the next step of the nearest enclosing loop.         AND ONLY LOOPS NOT LAMBDA i.e Array<T>.foreach { }
+
+	for (i in 1..3) 
+	    for (j in 1..3) {
+	        if (j%2==0)  break
+	        println("($i , $j)")
+	    }
+	} //prints as expected (1 , 1) (2 , 1) (3 , 1)
+
+	for (i in 1..3) 
+	    for (j in 1..3) {
+	        if (j%2==0)  continue
+	        println("($i , $j)")
+	    }
+	} //prints as expected (1 , 1) (1 , 3) (2 , 1) (2 , 3) (3 , 1) (3 , 3)
+
+
+Breaking the outer loop depending on a value form the inner loop
+
+  //java
+	boolean found = false;
+	for (int i= 1 ; i<=3 && !found ; i++) 
+		for (int j= 1 ; j<=3; j++) {
+		    found = j%2==0;
+			if(found) break;
+		    System.out.println("(" + i + " , "  + j + ")");
+		}//prints (1 , 1)
+
+  kotlin break with labels  
+	lit@ for (i in 1..3) 
+	    for (j in 1..3) {
+	        if (j%2==0)  break@lit
+	        println("($i , $j)")
+	    }
+	} //prints (1 , 1)
+
+
+Continue the outer loop depending on a value form the inner loop
+  //java
+	for (int i= 1 ; i<=3  ; i++) {
+		for (int j= 1 ; j<=3; j++) {
+			if(j%2==0) break;
+		    System.out.println("(" + i + " , "  + j + ")");
+		}
+		// maybe a continue here, if "found" to avoid excution the rest of the code inside the outer loop
+	}//prints (1 , 1) (2 , 1) (3 , 1)
+
+  kotlin continue with labels  
+	lit@ for (i in 1..3)   
+	    for (j in 1..3) {
+	        if (j%2==0)  continue@lit 
+	        println("($i , $j)")
+	    }
+	}//prints (1 , 1) (2 , 1) (3 , 1)
+
+****************************************************************************************

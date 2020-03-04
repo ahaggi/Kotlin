@@ -1,0 +1,169 @@
+Coroutines MULTITHREAD not SINGELTHREAD
+Coroutines are light-weight threads. They are launched with the coroutine builder "launch"  in a context of some "CoroutineScope". 
+
+Coroutine Builders: runBlocking, luanch ...
+Coroutine Scopes: GlobalScope, coroutineScope , some function's scope
+
+val coroutineBuilder = {  delay(1000L) ... }
+val coroutineBuilder :()->Unit = {  delay(1000L) ... }
+val coroutineBuilder :()->Unit = {-> delay(1000L) ... }
+
+someCoroutineScope.launch ( coroutineBuilder )
+
+
+- GlobalScope
+
+	Here we are launching a new coroutine in the GlobalScope, meaning that the lifetime of the new coroutine is limited only by the lifetime of the whole application
+	
+	GlobalScope.launch is a daemon thread which is a thread that does not prevent the JVM from exiting when the program finishes but the thread is still running. 
+	
+	fun main() {
+	    GlobalScope.launch {  // launch new coroutine in background and continue
+	        delay(1000L)      // non-blocking delay for 1 second (default time unit is ms)
+	        println("World!") // print after delay
+	    }
+	    println("Hello,")   // main thread continues while coroutine is delayed
+	    Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
+	}
+
+
+
+To ensure that the coroutine is done excuting before main function, we can use:
+
+delay : must be inside some coroutine builder
+	delay is a special suspending function that does not block a thread, but suspends coroutine and it can be only used from a coroutine.
+	
+	fun main(){
+	    runBlocking { delay(2000L) } // OK , block main thread
+	    GlobalScope.launch { delay(2000L) } // OK , non-blocking delay
+	    delay(2000L) // Error: Kotlin: Suspend functions are only allowed to be called from a coroutine or another suspend function
+	}
+
+	OR
+
+	fun main() = runBlocking {
+	    GlobalScope.launch { delay(2000L) } // OK , non-blocking delay
+		delay(2000L) // OK , block main thread
+	}
+
+
+join : must be inside some coroutine builder
+	referenceToLaunchedCoroutine.join()
+	Delaying for a time while another coroutine is working is not a good approach. Let's explicitly wait (in a non-blocking way) until the background Job that we have launched is complete:
+
+	fun main() = runBlocking {
+		val job = GlobalScope.launch { delay(2000L); println("1") } // OK , non-blocking delay
+		
+		job.join() // block main thread, wait until child coroutine completes
+		println("2")
+	}
+	// without job.join(), will print "2"
+
+Structured concurrency
+	If we forget to keep a reference to the newly launched coroutine it'll continue running, Having to manually keep a reference to all the launched coroutines and join them is error-prone.
+
+	Instead of launching coroutines in the GlobalScope, we can launch coroutines in the specific scope of the operation we are performing.
+
+	We can launch coroutines in "this" scope without having to join them explicitly, because an outer coroutine (runBlocking in our example) does not complete until all the coroutines launched in its scope complete. Thus, we can make our example simpler
+
+	fun main() = runBlocking { // this: CoroutineScope
+		launch {  
+            delay(200L)
+            println("1")
+        } 
+        println("2")
+	}                 // prints 2 , 1
+
+
+	fun main() = runBlocking { // this: CoroutineScope
+		launch {  
+            delay(200L)
+            println("1")
+        } 
+        delay(300L) //obs her
+        println("2")
+	}                    // prints 1 , 2
+
+Scope builder
+	In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using "coroutineScope" builder
+
+
+	fun main() = runBlocking {  
+		    coroutineScope {  
+                launch { 
+                    delay(200L)
+                    println("1")
+                } 
+            } 
+        println("2")
+	}// prints 1 , 2 ???  read the explanation
+
+
+runBlocking vs coroutineScope
+https://stackoverflow.com/a/53536713
+
+	fun main() = runBlocking { // @coroutine#1
+
+	     // create new coroutine  @coroutine#2
+	     launch {
+	        delay(200L)
+	        println("2 ${Thread.currentThread().name}")
+	    }
+
+	    coroutineScope { // Creates a new coroutine scope
+
+	     // create new coroutine  @coroutine#3
+	        launch {
+	            delay(900L)
+	            println("3 ${Thread.currentThread().name}")
+	        }
+
+	        delay(100L)
+	        println("1 ${Thread.currentThread().name}") // This line will be printed before nested launch
+	    }
+
+	    println("4 ${Thread.currentThread().name}") // This line is not printed until nested launch completes
+	} 
+	// prints 
+		1 main @coroutine#1
+		2 main @coroutine#2
+		3 main @coroutine#3
+		4 main @coroutine#1
+	Notice:
+		- runBlocking line1: creates a coroutine " @coroutine#1" which have a scope of the function that created it
+		- launch line 5: create new coroutine  @coroutine#2
+		- coroutineScope line9: Creates a new coroutine scope 
+		- launch line 10: creates a coroutine " @coroutine#3" which have the new scope which created by coroutineScope
+
+
+	The difference between runBlocking and coroutineScope happens at a lower level: what's happening to the thread while the coroutine is blocked?
+
+    * runBlocking is not a suspend fun. The thread that called it remains inside it until the coroutine is complete.
+
+    *  coroutineScope is a suspend fun. If your coroutine suspends, the coroutineScope function gets suspended as well. This allows the top-level function, a non-suspending function that created the coroutine, to continue executing on the same thread. The thread has "escaped" the coroutineScope block and is ready to do some other work.
+
+Extract function refactoring
+	fun main() = runBlocking {
+	    launch { doWorld() }
+	    println("Hello,")
+	}
+
+	// this is your first suspending function
+	suspend fun doWorld() {
+	    delay(1000L)
+	    println("World!")
+	}
+
+
+
+
+
+
+
+	****************************************************************************************
+
+	Composing suspending functions
+	https://kotlinlang.org/docs/reference/coroutines/composing-suspending-functions.html#composing-suspending-functions
+
+
+	

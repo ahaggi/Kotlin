@@ -1,0 +1,64 @@
+Delegation pattern
+
+
+class MyStackDeleg<T> (){
+    // With delegation pattern, we can implement just the required methods
+    // and use a delegate internally 
+    private var elems: ArrayList<T> = ArrayList<T>()
+    
+    fun push(elm:T){
+        elems.add(0, elm)
+    }
+    
+    fun pop () : T { 
+        var elm :T = elems.removeAt(0)
+        return elm
+    }
+}
+
+class MyStackInher<T> : ArrayList<T> (){
+    // With inheritance, we can implement some "stack" required methods
+    // and give the instance of this class an access to bunch of methods
+    // which aren't related to stack's functionality.
+	// i.e. mystack.elementAt(int) => not a functionality of a stack!
+
+    fun push(elm:T){
+        add(0, elm)
+    }
+    fun pop () : T { 
+        var elm :T = removeAt(0)
+        return elm
+    }
+}
+
+
+var y:String by Delegates.notNull<String>()
+
+"by" keyword
+
+ReadMore https://kotlinlang.org/docs/reference/delegation.html
+
+
+
+Delegated Properties
+https://kotlinlang.org/docs/reference/delegated-properties.html
+
+****************************************************************************************
+
+Delegation by lazy:
+
+The property which is delegated to "Lazy" is not created/evaluated until its first call
+
+val heavyObject: String by lazy {
+    println("computed!")
+    "value"
+}
+
+
+fun main() {
+    // some code
+
+    // until now "heavyObject" is null 
+    println(heavyObject) // excute the lambda => heavyObject = value
+    println(heavyObject) // heavyObject = value
+}

@@ -1,0 +1,16 @@
+infix fun <T> Boolean.then(param: T): T? = if (this) param else null
+
+val x = condition then "thenValue" ?: "elseValue"
+
+    val x = (5 % 2 != 0) then "yes" ?: "no"
+    println(x)
+
+
+
+
+
+
+    var l:MutableList<Int> = (1..100).map {it-> it*2 }.toMutableList().also(::println)
+
+
+
